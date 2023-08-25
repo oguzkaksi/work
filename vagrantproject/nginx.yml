@@ -1,0 +1,73 @@
+---
+- hosts: web_servers
+  tasks:
+    - name: install nginx
+      become: true
+      become_user: root
+      apt:
+        name: nginx
+
+- name: stop nginx
+  hosts: web_servers
+  become: true
+  become_user: root
+  tasks:
+    - name: stop nginx
+      ansible.builtin.service:
+          name: nginx
+          state: stopped
+
+
+- hosts: db_servers
+  tasks:
+    - name: payment service
+      ansible.builtin.fetch:
+        src: /home/vagrant/deployment/payment-service/index.html
+        dest: /home/vagrant
+    - name: user service
+      ansible.builtin.fetch:
+        src: /home/vagrant/deployment/user-service/index.html
+        dest: /home/vagrant
+    - name: product service
+      ansible.builtin.fetch:
+        src: /home/vagrant/deployment/product-service/index.html
+        dest: /home/vagrant
+
+- hosts: vm1
+  become: true
+  become_user: root
+  tasks:
+    - name: payment service
+      ansible.builtin.copy:
+        src: vagrant@192.168.50.2/home/vagrant/deployment/payment-service/index.html
+        dest: /var/www/html/index.html
+
+- hosts: vm2
+  become: true
+  become_user: root
+  tasks:
+    - name: product service
+      ansible.builtin.copy:
+        src: vagrant@192.168.50.2/home/vagrant/deployment/product-service/index.html
+        dest: /var/www/html
+
+- hosts: vm3
+  become: true
+  become_user: root
+  tasks:
+    - name: user service
+      ansible.builtin.copy:
+        src: vagrant@192.168.50.2/home/vagrant/deployment/user-service/index.html
+        dest: /var/www/html
+
+
+- name: start nginx
+  hosts: web_servers
+  become: true
+  become_user: root
+  tasks:
+    - name: start nginx
+      ansible.builtin.service:
+          name: nginx
+          state: started
+
